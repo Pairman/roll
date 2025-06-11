@@ -1,0 +1,51 @@
+name: Check Version
+
+outputs:
+  version:
+    description: The current version in project metadata
+    value: ${{ steps.get-version-curr.outputs.version }}
+  version_change:
+    description: Whether the version changed in the last commit
+    value: ${{ steps.check-version.outputs.version_change }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Get current version
+      id: get-version-curr
+      uses: ./.github/actions/get-version
+
+    - name: Checkout previous commit
+      shell: bash
+      run: git checkout HEAD^
+
+    - name: Get previous version
+      id: get-version-prev
+      uses: ./.github/actions/get-version
+
+    - name: Read and check for version increment
+      id: check-version
+      shell: bash
+      run: |
+        version=${{ steps.get-version-curr.outputs.version }}
+        version_prev=${{ steps.get-version-prev.outputs.version }}
+        version_change=false
+        IFS='.' read -r -a v1 <<< "$version"
+        IFS='.' read -r -a v2 <<< "$version_prev"
+        for i in 0 1 2; do
+            m=$((10#${v1[i]:-0}))
+            n=$((10#${v2[i]:-0}))
+            if (( m > n )); then
+                version_change=true
+                break
+            elif (( m < n )); then
+                break
+            fi
+        done
+        echo "Version: $version_prev -> $version, changed: $version_change"
+        echo "version=$version" >> $GITHUB_OUTPUT
+        echo "version_change=$version_change" >> $GITHUB_OUTPUT
+
+    - name: Checkout latest commit
+      shell: bash
+      run: git checkout -

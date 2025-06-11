@@ -1,0 +1,25 @@
+name: Get Version
+
+outputs:
+  version:
+    description: The version string
+    value: ${{ steps.get-version.outputs.version }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Get version
+      id: get-version
+      shell: bash
+      run: |
+        mkdir -p cache/version/
+        cd cache/version/
+
+        go mod init "pnxlr.eu.org/version" >/dev/null 2>&1
+        echo "package main; import \"fmt\"; func main(){fmt.Println(Version)}" > main.go
+        cp "${GITHUB_WORKSPACE}/version.go" .
+        version=$(go run main.go version.go)
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+
+        cd ../..
+        rm -rf cache/version/

@@ -1,0 +1,52 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - version.go
+  workflow_dispatch:
+
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    name: Build and release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.1
+        with:
+          fetch-depth: 2
+
+      - name: Check version
+        id: check-version
+        uses: ./.github/actions/check-version
+
+      - name: Build packages
+        id: build
+        if: ${{ steps.check-version.outputs.version_change == 'true' }}
+        shell: bash
+        run: |
+          ./build-all.sh
+        working-directory: ${{ github.workspace }}
+
+      - name: Extract Release Notes
+        id: extract-release-notes
+        if: ${{ steps.check-version.outputs.version_change == 'true' }}
+        uses: ffurrer2/extract-release-notes@v2.1.0
+
+      - name: Release to GitHub
+        if: ${{ steps.check-version.outputs.version_change == 'true' }}
+        uses: softprops/action-gh-release@v2.0.2
+        with:
+          token: ${{ secrets.GH_TOKEN_RELEASES }}
+          tag_name: ${{ steps.check-version.outputs.version }}
+          name: ${{ steps.check-version.outputs.version }}
+          body: ${{ steps.extract-release-notes.outputs.release_notes }}
+          files: |
+            build/*
