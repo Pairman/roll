@@ -73,7 +73,7 @@ func Upload(file *os.File, options *UploadOptions) (*UploadResult, error) {
 
 	pasteId, err := shareApi.PastebinShareCreate(fname, id)
 	if err != nil {
-		log.Infof("Upload warn: %v", err)
+		log.Errf("Upload warn: %v", err)
 	} else if options.Verbose {
 		log.Infof("Share key '%v' expires in 1 hour", pasteId)
 	}
