@@ -10,9 +10,11 @@ import (
 	"path"
 	"strconv"
 	"strings"
+
+	shareApi "pnxlr.eu.org/roll/net/share/api"
 )
 
-func ShareURLFromObjectID(id string) string {
+func ShareURLFromObjectOrResID(id string) string {
 	return "https://pan-yz.chaoxing.com/external/m/file/" + id
 }
 
@@ -24,7 +26,7 @@ func ObjectIDFromURL(url string) (string, error) {
 	id := strings.SplitN(path.Base(u.Path), ".", 1)[0]
 
 	if _, err := strconv.Atoi(id); err == nil {
-		req, _ := http.NewRequest("GET", ShareURLFromObjectID(id), nil)
+		req, _ := http.NewRequest("GET", ShareURLFromObjectOrResID(id), nil)
 		req.Header = GlobalHeader.Clone()
 
 		res, err := (&http.Client{}).Do(req)
@@ -42,6 +44,8 @@ func ObjectIDFromURL(url string) (string, error) {
 		}
 	} else if len(id) == 32 {
 		return id, nil
+	} else if len(id) < 32 {
+		return shareApi.PastebinShareGet(id)
 	}
 	return "", errors.New("no valid object ID found")
 }

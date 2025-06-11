@@ -13,8 +13,8 @@ import (
 //
 // Limits: Up to 2GiB. Validates file extension and content.
 type RobotUploader struct {
-	URL     string
-	Headers http.Header
+	URL    string
+	Header http.Header
 }
 
 type RobotUploadJson struct {
@@ -30,20 +30,20 @@ type RobotUploadJson struct {
 
 func NewRobotUploader() *RobotUploader {
 	return &RobotUploader{
-		URL:     "https://robot.chaoxing.com/v1/front/uploadKnowledgeFile",
-		Headers: netUtil.GlobalHeader.Clone(),
+		URL:    "https://robot.chaoxing.com/v1/front/uploadKnowledgeFile",
+		Header: netUtil.GlobalHeader.Clone(),
 	}
 }
 
-func (uploader *RobotUploader) Json(raw []byte) (*RobotUploadJson, error) {
+func (u *RobotUploader) Json(raw []byte) (*RobotUploadJson, error) {
 	data := &RobotUploadJson{}
 	return data, json.Unmarshal(raw, data)
 }
 
-func (uploader *RobotUploader) Success(data *RobotUploadJson) bool {
+func (u *RobotUploader) Success(data *RobotUploadJson) bool {
 	return data.StatusCode == 0 && data.Data.Timestamp != 0
 }
 
-func (uploader *RobotUploader) ObjectID(data *RobotUploadJson) string {
+func (u *RobotUploader) ObjectID(data *RobotUploadJson) string {
 	return data.Data.OriginText
 }

@@ -68,7 +68,12 @@ func main() {
 		}
 		res, err := up.Upload(uploadFile, options)
 		if err == nil {
-			log.Infof("Uploaded to '%v'", res.URL)
+			if res.ShareKey != "" {
+				log.Infof("Uploaded to '%v', share key '%v' expires in 1 hour",
+					res.URL, res.ShareKey)
+			} else {
+				log.Infof("Uploaded to '%v'", res.URL)
+			}
 		} else {
 			log.Errf("Upload error: %v", err)
 			os.Exit(1)

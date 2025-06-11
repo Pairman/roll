@@ -11,7 +11,8 @@ import (
 
 	"pnxlr.eu.org/roll/fs/header"
 	"pnxlr.eu.org/roll/fs/reader"
-	"pnxlr.eu.org/roll/net/up/api"
+	shareApi "pnxlr.eu.org/roll/net/share/api"
+	upApi "pnxlr.eu.org/roll/net/up/api"
 	netUtil "pnxlr.eu.org/roll/net/util"
 	"pnxlr.eu.org/roll/util/log"
 )
@@ -26,8 +27,7 @@ func Upload(file *os.File, options *UploadOptions) (*UploadResult, error) {
 		fname = finfo.Name()
 		if options.Verbose {
 			fsize = int(finfo.Size())
-			log.Infof("Upload size: %vB, name: '%v'.\nUpload start...",
-				finfo.Size(), fname)
+			log.Infof("Upload size: %vB, name: '%v'", finfo.Size(), fname)
 		}
 	}
 	pr, pw := io.Pipe()
@@ -35,12 +35,11 @@ func Upload(file *os.File, options *UploadOptions) (*UploadResult, error) {
 	fh := header.NewFileHeaderFromFile(file)
 	fh.CompSect.Algo = options.Compress.Algo
 	fh.EncSect.Algo = options.Encrypt.Algo
-	br := reader.NewBlockReader(file, fsize,
-		fh.ToBytes())
+	br := reader.NewBlockReader(file, fsize, fh.ToBytes())
 	go upload(br, pw, w, options)
-	uploader := api.NewRobotUploader()
+	uploader := upApi.NewRobotUploader()
 	req, _ := http.NewRequest("POST", uploader.URL, pr)
-	req.Header = uploader.Headers.Clone()
+	req.Header = uploader.Header.Clone()
 	req.Header.Set("Content-Type", w.FormDataContentType())
 
 	timeStart := time.Now()
@@ -66,12 +65,20 @@ func Upload(file *os.File, options *UploadOptions) (*UploadResult, error) {
 		log.Errf("Upload failed: %v", json)
 	}
 	id := uploader.ObjectID(json)
-	url := netUtil.ShareURLFromObjectID(uploader.ObjectID(json))
+	url := netUtil.ShareURLFromObjectOrResID(uploader.ObjectID(json))
 	if options.Verbose {
-		log.Infof("Uploaded to '%v', %.2fs elapsed.", url,
+		log.Infof("Uploaded to '%v', %.2fs elapsed", url,
 			timeElapsed.Seconds())
 	}
-	return &UploadResult{ObjectID: id, URL: url}, nil
+
+	pasteId, err := shareApi.PastebinShareCreate(fname, id)
+	if err != nil {
+		log.Infof("Upload warn: %v", err)
+	} else if options.Verbose {
+		log.Infof("Share key '%v' expires in 1 hour", pasteId)
+	}
+
+	return &UploadResult{ObjectID: id, URL: url, ShareKey: pasteId}, nil
 }
 
 func upload(br *reader.BlockReader, pw *io.PipeWriter, w *multipart.Writer,
