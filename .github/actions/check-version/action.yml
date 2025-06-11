@@ -17,7 +17,7 @@ runs:
 
     - name: Checkout previous commit
       shell: bash
-      run: git checkout HEAD^
+      run: git checkout HEAD^ > /dev/null
 
     - name: Get previous version
       id: get-version-prev
