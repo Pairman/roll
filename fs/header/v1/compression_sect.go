@@ -3,36 +3,15 @@ package v1
 import (
 	"bytes"
 	"fmt"
-	"strconv"
 
 	"pnxlr.eu.org/roll/fs/header"
 	"pnxlr.eu.org/roll/fs/util"
 )
 
-type CompressionAlgoType int8
-
-const SizeCompressionAlgoType = 1
-
-const (
-	CompressionAlgoNone CompressionAlgoType = iota
-	CompressionAlgoZSTD
-)
-
-func (a CompressionAlgoType) String() string {
-	switch a {
-	case CompressionAlgoNone:
-		return "None"
-	case CompressionAlgoZSTD:
-		return "ZSTD"
-	default:
-		return strconv.Itoa(int(a))
-	}
-}
-
 type CompressionSect struct { // File compression
-	Algo     CompressionAlgoType // Algorithm
-	InfoSize int16               // Information length
-	Info     []byte              // Information
+	Algo     header.CompressionAlgoType // Algorithm
+	InfoSize int16                      // Information length
+	Info     []byte                     // Information
 }
 
 func (s CompressionSect) String() string {
@@ -40,10 +19,11 @@ func (s CompressionSect) String() string {
 		s.Algo, s.InfoSize, s.Info)
 }
 
-func NewCompressionSect(algo CompressionAlgoType) (*CompressionSect, error) {
+func NewCompressionSect(
+	algo header.CompressionAlgoType) (*CompressionSect, error) {
 	switch algo {
-	case CompressionAlgoNone:
-	case CompressionAlgoZSTD:
+	case header.CompressionAlgoNone:
+	case header.CompressionAlgoZSTD:
 	default:
 		return nil, fmt.Errorf("unknown compression algorithm: %v", algo)
 	}
@@ -59,9 +39,9 @@ func (s *CompressionSect) ToBytes() []byte {
 }
 
 func (s *CompressionSect) FromBytes(p []byte) error {
-	s.Algo = util.LiteralFromBytes[CompressionAlgoType](
-		p[:SizeCompressionAlgoType])
-	offs := SizeCompressionAlgoType
+	s.Algo = util.LiteralFromBytes[header.CompressionAlgoType](
+		p[:header.SizeCompressionAlgoType])
+	offs := header.SizeCompressionAlgoType
 	s.InfoSize = util.LiteralFromBytes[int16](p[offs : offs+header.SizeInt16])
 	offs += header.SizeInt16
 	if sectLen := s.Len(); len(p) != sectLen {
@@ -74,5 +54,5 @@ func (s *CompressionSect) FromBytes(p []byte) error {
 }
 
 func (s *CompressionSect) Len() int {
-	return SizeCompressionAlgoType + header.SizeInt16 + int(s.InfoSize)
+	return header.SizeCompressionAlgoType + header.SizeInt16 + int(s.InfoSize)
 }

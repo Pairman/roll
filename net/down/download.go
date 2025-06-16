@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	header "pnxlr.eu.org/roll/fs/header"
 	headerV1 "pnxlr.eu.org/roll/fs/header/v1"
 	"pnxlr.eu.org/roll/fs/reader"
 	fsUtil "pnxlr.eu.org/roll/fs/util"
@@ -61,8 +62,8 @@ func Download(id string, options *DownloadOptions) (*DownloadResult, error) {
 	tmpFile.Seek(0, io.SeekStart)
 
 	// Possible decompression and decryption
-	isCompressed := fh.CompSect.Algo != headerV1.CompressionAlgoNone
-	isEncrypted := fh.EncSect.Algo != headerV1.EncryptionAlgoNone
+	isCompressed := fh.CompSect.Algo != header.CompressionAlgoNone
+	isEncrypted := fh.EncSect.Algo != header.EncryptionAlgoNone
 	if isCompressed || isEncrypted {
 		// Create output file
 		file, err := fsUtil.CreateFile(outPath, fh.FileSect.FileSize)
@@ -75,7 +76,7 @@ func Download(id string, options *DownloadOptions) (*DownloadResult, error) {
 		// Decompress / decrypt
 		if isCompressed {
 			switch fh.CompSect.Algo {
-			case headerV1.CompressionAlgoZSTD:
+			case header.CompressionAlgoZSTD:
 				if options.Verbose {
 					log.Infoln("Decompressing with ZSTD")
 				}
@@ -93,7 +94,7 @@ func Download(id string, options *DownloadOptions) (*DownloadResult, error) {
 			}
 		} else if isEncrypted {
 			switch fh.EncSect.Algo {
-			case headerV1.EncryptionAlgoAES256GCM:
+			case header.EncryptionAlgoAES256GCM:
 				if options.Verbose {
 					log.Infoln("Decrypting with AES-256-GCM")
 				}

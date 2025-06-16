@@ -4,41 +4,17 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"strconv"
 
 	"pnxlr.eu.org/roll/fs/header"
 	"pnxlr.eu.org/roll/fs/util"
 )
 
-type FileType int8
-
-const SizeFileType = 1
-
-const (
-	FileTypeDirectory FileType = iota
-	FileTypeRegular
-	FileTypeSymlink
-)
-
-func (t FileType) String() string {
-	switch t {
-	case FileTypeDirectory:
-		return "Directory"
-	case FileTypeRegular:
-		return "Regular"
-	case FileTypeSymlink:
-		return "Symlink"
-	default:
-		return strconv.Itoa(int(t))
-	}
-}
-
 type FileSect struct { // File information
-	FileSize int64    // Length
-	FileType FileType // File type
-	Time     int64    // Modified time in milliseconds
-	NameSize int16    // Name length
-	Name     []byte   // Name
+	FileSize int64           // Length
+	FileType header.FileType // File type
+	Time     int64           // Modified time in milliseconds
+	NameSize int16           // Name length
+	Name     []byte          // Name
 }
 
 func (s FileSect) String() string {
@@ -55,7 +31,7 @@ func NewFileSect(file *os.File) (*FileSect, error) {
 	name := []byte(fileInfo.Name())
 	return &FileSect{
 		FileSize: fileInfo.Size(),
-		FileType: FileTypeRegular,
+		FileType: header.FileTypeRegular,
 		Time:     fileInfo.ModTime().UnixMilli(),
 		NameSize: int16(len(name)), Name: name,
 	}, nil
@@ -74,8 +50,9 @@ func (s FileSect) ToBytes() []byte {
 func (s *FileSect) FromBytes(p []byte) error {
 	s.FileSize = util.LiteralFromBytes[int64](p[:header.SizeInt64])
 	offs := header.SizeInt64
-	s.FileType = util.LiteralFromBytes[FileType](p[offs : offs+SizeFileType])
-	offs += SizeFileType
+	s.FileType = util.LiteralFromBytes[header.FileType](
+		p[offs : offs+header.SizeFileType])
+	offs += header.SizeFileType
 	s.Time = util.LiteralFromBytes[int64](p[offs : offs+header.SizeInt64])
 	offs += header.SizeInt64
 	s.NameSize = util.LiteralFromBytes[int16](p[offs : offs+header.SizeInt16])
@@ -90,6 +67,6 @@ func (s *FileSect) FromBytes(p []byte) error {
 }
 
 func (s *FileSect) Len() int {
-	return header.SizeInt64 + SizeFileType + header.SizeInt64 +
+	return header.SizeInt64 + header.SizeFileType + header.SizeInt64 +
 		header.SizeInt16 + int(s.NameSize)
 }

@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	header "pnxlr.eu.org/roll/fs/header"
 	headerV1 "pnxlr.eu.org/roll/fs/header/v1"
 )
 
@@ -24,12 +25,12 @@ func TestFileHeader(t *testing.T) {
 		t.Errorf("NewHashSect() error: %v", err)
 	}
 
-	cs, err := headerV1.NewCompressionSect(headerV1.CompressionAlgoZSTD)
+	cs, err := headerV1.NewCompressionSect(header.CompressionAlgoZSTD)
 	if err != nil {
 		t.Errorf("NewCompressionSect() error: %v", err)
 	}
 
-	es, err := headerV1.NewEncryptionSect(headerV1.EncryptionAlgoAES256GCM)
+	es, err := headerV1.NewEncryptionSect(header.EncryptionAlgoAES256GCM)
 	if err != nil {
 		t.Errorf("NewEncryptionSect() error: %v", err)
 	}

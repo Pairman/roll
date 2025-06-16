@@ -4,37 +4,16 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"strconv"
 
 	"github.com/zeebo/xxh3"
 	"pnxlr.eu.org/roll/fs/header"
 	"pnxlr.eu.org/roll/fs/util"
 )
 
-type HashAlgoType int8
-
-const SizeHashAlgoType = 1
-
-const (
-	HashAlgoNone HashAlgoType = iota
-	HashAlgoXXH3
-)
-
-func (a HashAlgoType) String() string {
-	switch a {
-	case HashAlgoNone:
-		return "None"
-	case HashAlgoXXH3:
-		return "XXH3"
-	default:
-		return strconv.Itoa(int(a))
-	}
-}
-
 type HashSect struct { // File hashing
-	Algo     HashAlgoType // Algorithm
-	HashSize int16        // Hash length
-	Hash     []byte       // Hash
+	Algo     header.HashAlgoType // Algorithm
+	HashSize int16               // Hash length
+	Hash     []byte              // Hash
 }
 
 func (s HashSect) String() string {
@@ -42,7 +21,7 @@ func (s HashSect) String() string {
 		s.Algo, s.HashSize, s.Hash)
 }
 
-func NewHashSect(r io.Reader, algo HashAlgoType) (*HashSect, error) {
+func NewHashSect(r io.Reader, algo header.HashAlgoType) (*HashSect, error) {
 	trySeekStart(r)
 	hash, err := funcHash(r, algo)
 	trySeekStart(r)
@@ -63,8 +42,9 @@ func (s *HashSect) ToBytes() []byte {
 }
 
 func (s *HashSect) FromBytes(p []byte) error {
-	s.Algo = util.LiteralFromBytes[HashAlgoType](p[:SizeHashAlgoType])
-	offs := SizeHashAlgoType
+	s.Algo = util.LiteralFromBytes[header.HashAlgoType](
+		p[:header.SizeHashAlgoType])
+	offs := header.SizeHashAlgoType
 	s.HashSize = util.LiteralFromBytes[int16](p[offs : offs+header.SizeInt16])
 	offs += header.SizeInt16
 	if sectLen := s.Len(); len(p) != sectLen {
@@ -77,7 +57,7 @@ func (s *HashSect) FromBytes(p []byte) error {
 }
 
 func (s *HashSect) Len() int {
-	return SizeHashAlgoType + header.SizeInt16 + int(s.HashSize)
+	return header.SizeHashAlgoType + header.SizeInt16 + int(s.HashSize)
 }
 
 func (s *HashSect) Verify(r io.Reader) (bool, []byte, error) {
@@ -90,11 +70,11 @@ func (s *HashSect) Verify(r io.Reader) (bool, []byte, error) {
 	return bytes.Equal(hash, s.Hash), hash, nil
 }
 
-func funcHash(r io.Reader, algo HashAlgoType) ([]byte, error) {
+func funcHash(r io.Reader, algo header.HashAlgoType) ([]byte, error) {
 	hash := []byte{}
 	switch algo {
-	case HashAlgoNone:
-	case HashAlgoXXH3:
+	case header.HashAlgoNone:
+	case header.HashAlgoXXH3:
 		hasher := xxh3.New()
 		io.Copy(hasher, r) // Calls hasher.Write(), which never errors
 		hash = util.LiteralToBytes(hasher.Sum64())

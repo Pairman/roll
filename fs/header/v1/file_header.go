@@ -24,7 +24,8 @@ type FileHeader struct {
 }
 
 func NewFileHeader(fileSect *FileSect, hashSect *HashSect,
-	compressionSect *CompressionSect, encryptionSect *EncryptionSect) *FileHeader {
+	compressionSect *CompressionSect,
+	encryptionSect *EncryptionSect) *FileHeader {
 	pngSect := NewPNGSect()
 	fileHeader := &FileHeader{
 		PNGSect: *pngSect, Ver: header.FileHeaderVersion1,
@@ -48,9 +49,9 @@ func (s *FileHeader) String() string {
 
 func NewFileHeaderFromFile(f *os.File) *FileHeader {
 	fs, _ := NewFileSect(f)
-	hs, _ := NewHashSect(f, HashAlgoXXH3)
-	cs, _ := NewCompressionSect(CompressionAlgoNone)
-	es, _ := NewEncryptionSect(EncryptionAlgoNone)
+	hs, _ := NewHashSect(f, header.HashAlgoXXH3)
+	cs, _ := NewCompressionSect(header.CompressionAlgoNone)
+	es, _ := NewEncryptionSect(header.EncryptionAlgoNone)
 	return NewFileHeader(fs, hs, cs, es)
 }
 
