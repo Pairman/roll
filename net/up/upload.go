@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"pnxlr.eu.org/roll/fs/header"
+	headerV1 "pnxlr.eu.org/roll/fs/header/v1"
 	"pnxlr.eu.org/roll/fs/reader"
 	shareApi "pnxlr.eu.org/roll/net/share/api"
 	upApi "pnxlr.eu.org/roll/net/up/api"
@@ -32,7 +32,7 @@ func Upload(file *os.File, options *UploadOptions) (*UploadResult, error) {
 	}
 	pr, pw := io.Pipe()
 	w := multipart.NewWriter(pw)
-	fh := header.NewFileHeaderFromFile(file)
+	fh := headerV1.NewFileHeaderFromFile(file)
 	fh.CompSect.Algo = options.Compress.Algo
 	fh.EncSect.Algo = options.Encrypt.Algo
 	br := reader.NewBlockReader(file, fsize, fh.ToBytes())
@@ -98,14 +98,14 @@ func upload(br *reader.BlockReader, pw *io.PipeWriter, w *multipart.Writer,
 	defer c.Close()
 	if options.Compress.On {
 		switch options.Compress.Algo {
-		case header.CompressionAlgoZSTD:
+		case headerV1.CompressionAlgoZSTD:
 			log.Infof("Compression enabled with ZSTD")
 			zr := reader.NewZSTDEncoder(br)
 			r, c = zr, zr
 		}
 	} else if options.Encrypt.On {
 		switch options.Encrypt.Algo {
-		case header.EncryptionAlgoAES256GCM:
+		case headerV1.EncryptionAlgoAES256GCM:
 			log.Infof("Encryption enabled with AES-256-GCM")
 			var kiv [32 + 12]byte
 			rand.Read(kiv[:])

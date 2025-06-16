@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"pnxlr.eu.org/roll/fs/header"
+	headerV1 "pnxlr.eu.org/roll/fs/header/v1"
 	"pnxlr.eu.org/roll/fs/reader"
 	fsUtil "pnxlr.eu.org/roll/fs/util"
 	netUtil "pnxlr.eu.org/roll/net/util"
@@ -61,8 +61,8 @@ func Download(id string, options *DownloadOptions) (*DownloadResult, error) {
 	tmpFile.Seek(0, io.SeekStart)
 
 	// Possible decompression and decryption
-	isCompressed := fh.CompSect.Algo != header.CompressionAlgoNone
-	isEncrypted := fh.EncSect.Algo != header.EncryptionAlgoNone
+	isCompressed := fh.CompSect.Algo != headerV1.CompressionAlgoNone
+	isEncrypted := fh.EncSect.Algo != headerV1.EncryptionAlgoNone
 	if isCompressed || isEncrypted {
 		// Create output file
 		file, err := fsUtil.CreateFile(outPath, fh.FileSect.FileSize)
@@ -75,7 +75,7 @@ func Download(id string, options *DownloadOptions) (*DownloadResult, error) {
 		// Decompress / decrypt
 		if isCompressed {
 			switch fh.CompSect.Algo {
-			case header.CompressionAlgoZSTD:
+			case headerV1.CompressionAlgoZSTD:
 				if options.Verbose {
 					log.Infoln("Decompressing with ZSTD")
 				}
@@ -93,7 +93,7 @@ func Download(id string, options *DownloadOptions) (*DownloadResult, error) {
 			}
 		} else if isEncrypted {
 			switch fh.EncSect.Algo {
-			case header.EncryptionAlgoAES256GCM:
+			case headerV1.EncryptionAlgoAES256GCM:
 				if options.Verbose {
 					log.Infoln("Decrypting with AES-256-GCM")
 				}
@@ -174,9 +174,9 @@ func downloadChunkBytes(client *http.Client, url string,
 }
 
 func downloadFileHeader(client *http.Client,
-	url string) (*header.FileHeader, error) {
-	p, err := downloadChunkBytes(client, url, header.PNGSectDataSize,
-		header.PNGSectDataSize+4-1)
+	url string) (*headerV1.FileHeader, error) {
+	p, err := downloadChunkBytes(client, url, headerV1.SizePNGSectData,
+		headerV1.SizePNGSectData+4-1)
 	if err != nil {
 		return nil, err
 	}
@@ -185,12 +185,12 @@ func downloadFileHeader(client *http.Client,
 	if err != nil {
 		return nil, err
 	}
-	fh := &header.FileHeader{}
+	fh := &headerV1.FileHeader{}
 	return fh, fh.FromBytes(p)
 }
 
 func retrieveDownloadInfo(client *http.Client,
-	id string) (*netUtil.CloudfileStatusJson, *header.FileHeader, error) {
+	id string) (*netUtil.CloudfileStatusJson, *headerV1.FileHeader, error) {
 	id, err := netUtil.ObjectIDFromURL(id)
 	if err != nil {
 		return nil, nil, err

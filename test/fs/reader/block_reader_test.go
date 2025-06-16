@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"pnxlr.eu.org/roll/fs/header"
+	headerV1 "pnxlr.eu.org/roll/fs/header/v1"
 	"pnxlr.eu.org/roll/fs/reader"
 	"pnxlr.eu.org/roll/fs/util"
 )
@@ -18,7 +18,7 @@ func TestBlockReader(t *testing.T) {
 	defer f.Close()
 	f.Write(bytes.Repeat([]byte("cafebabe"), util.MiB/len(TEXT)/2*3))
 
-	fh := header.NewFileHeaderFromFile(f)
+	fh := headerV1.NewFileHeaderFromFile(f)
 	br := reader.NewBlockReader(f, int(fh.FileSect.FileSize), fh.ToBytes())
 	defer br.Close()
 

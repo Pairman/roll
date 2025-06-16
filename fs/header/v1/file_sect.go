@@ -1,4 +1,4 @@
-package header
+package v1
 
 import (
 	"bytes"
@@ -6,10 +6,13 @@ import (
 	"os"
 	"strconv"
 
+	"pnxlr.eu.org/roll/fs/header"
 	"pnxlr.eu.org/roll/fs/util"
 )
 
 type FileType int8
+
+const SizeFileType = 1
 
 const (
 	FileTypeDirectory FileType = iota
@@ -17,8 +20,8 @@ const (
 	FileTypeSymlink
 )
 
-func (a FileType) String() string {
-	switch a {
+func (t FileType) String() string {
+	switch t {
 	case FileTypeDirectory:
 		return "Directory"
 	case FileTypeRegular:
@@ -26,7 +29,7 @@ func (a FileType) String() string {
 	case FileTypeSymlink:
 		return "Symlink"
 	default:
-		return strconv.Itoa(int(a))
+		return strconv.Itoa(int(t))
 	}
 }
 
@@ -69,19 +72,24 @@ func (s FileSect) ToBytes() []byte {
 }
 
 func (s *FileSect) FromBytes(p []byte) error {
-	s.FileSize = util.LiteralFromBytes[int64](p[:8])
-	s.FileType = util.LiteralFromBytes[FileType](p[8:9])
-	s.Time = util.LiteralFromBytes[int64](p[9:17])
-	s.NameSize = util.LiteralFromBytes[int16](p[17:19])
+	s.FileSize = util.LiteralFromBytes[int64](p[:header.SizeInt64])
+	offs := header.SizeInt64
+	s.FileType = util.LiteralFromBytes[FileType](p[offs : offs+SizeFileType])
+	offs += SizeFileType
+	s.Time = util.LiteralFromBytes[int64](p[offs : offs+header.SizeInt64])
+	offs += header.SizeInt64
+	s.NameSize = util.LiteralFromBytes[int16](p[offs : offs+header.SizeInt16])
+	offs += header.SizeInt16
 	if sectLen := s.Len(); len(p) != sectLen {
 		return fmt.Errorf("buffer length mismatch: %d, %d", sectLen, len(p))
 	}
 	buff := bytes.Buffer{}
-	buff.Write(p[19:s.Len()])
+	buff.Write(p[offs:s.Len()])
 	s.Name = buff.Bytes()
 	return nil
 }
 
 func (s *FileSect) Len() int {
-	return 19 + int(s.NameSize)
+	return header.SizeInt64 + SizeFileType + header.SizeInt64 +
+		header.SizeInt16 + int(s.NameSize)
 }

@@ -1,6 +1,6 @@
 package up
 
-import "pnxlr.eu.org/roll/fs/header"
+import headerV1 "pnxlr.eu.org/roll/fs/header/v1"
 
 type UploadOptions struct {
 	Verbose  bool
@@ -10,10 +10,10 @@ type UploadOptions struct {
 
 type CompressionOptions struct {
 	On   bool
-	Algo header.CompressionAlgoType
+	Algo headerV1.CompressionAlgoType
 }
 
 type EncryptionOptions struct {
 	On   bool
-	Algo header.EncryptionAlgoType
+	Algo headerV1.EncryptionAlgoType
 }

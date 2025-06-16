@@ -1,4 +1,4 @@
-package header
+package v1
 
 import (
 	"bytes"
@@ -7,10 +7,13 @@ import (
 	"strconv"
 
 	"github.com/zeebo/xxh3"
+	"pnxlr.eu.org/roll/fs/header"
 	"pnxlr.eu.org/roll/fs/util"
 )
 
 type HashAlgoType int8
+
+const SizeHashAlgoType = 1
 
 const (
 	HashAlgoNone HashAlgoType = iota
@@ -60,19 +63,21 @@ func (s *HashSect) ToBytes() []byte {
 }
 
 func (s *HashSect) FromBytes(p []byte) error {
-	s.Algo = util.LiteralFromBytes[HashAlgoType](p[:1])
-	s.HashSize = util.LiteralFromBytes[int16](p[1:3])
+	s.Algo = util.LiteralFromBytes[HashAlgoType](p[:SizeHashAlgoType])
+	offs := SizeHashAlgoType
+	s.HashSize = util.LiteralFromBytes[int16](p[offs : offs+header.SizeInt16])
+	offs += header.SizeInt16
 	if sectLen := s.Len(); len(p) != sectLen {
 		return fmt.Errorf("buffer length mismatch: %d, %d", sectLen, len(p))
 	}
 	buff := bytes.Buffer{}
-	buff.Write(p[3:s.Len()])
+	buff.Write(p[offs:s.Len()])
 	s.Hash = buff.Bytes()
 	return nil
 }
 
 func (s *HashSect) Len() int {
-	return 3 + int(s.HashSize)
+	return SizeHashAlgoType + header.SizeInt16 + int(s.HashSize)
 }
 
 func (s *HashSect) Verify(r io.Reader) (bool, []byte, error) {

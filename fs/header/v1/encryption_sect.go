@@ -1,14 +1,17 @@
-package header
+package v1
 
 import (
 	"bytes"
 	"fmt"
 	"strconv"
 
+	"pnxlr.eu.org/roll/fs/header"
 	"pnxlr.eu.org/roll/fs/util"
 )
 
 type EncryptionAlgoType int8
+
+const SizeEncryptionAlgoType = 1
 
 const (
 	EncryptionAlgoNone EncryptionAlgoType = iota
@@ -58,17 +61,19 @@ func (s *EncryptionSect) ToBytes() []byte {
 }
 
 func (s *EncryptionSect) FromBytes(p []byte) error {
-	s.Algo = util.LiteralFromBytes[EncryptionAlgoType](p[:1])
-	s.InfoSize = util.LiteralFromBytes[int16](p[1:3])
+	s.Algo = util.LiteralFromBytes[EncryptionAlgoType](p[:SizeEncryptionAlgoType])
+	offs := SizeEncryptionAlgoType
+	s.InfoSize = util.LiteralFromBytes[int16](p[offs : offs+header.SizeInt16])
+	offs += header.SizeInt16
 	if sectLen := s.Len(); len(p) != sectLen {
 		return fmt.Errorf("info length mismatch: %d, %d", sectLen, len(p))
 	}
 	buff := bytes.Buffer{}
-	buff.Write(p[3:s.Len()])
+	buff.Write(p[offs:s.Len()])
 	s.Info = buff.Bytes()
 	return nil
 }
 
 func (s *EncryptionSect) Len() int {
-	return 3 + int(s.InfoSize)
+	return SizeEncryptionAlgoType + header.SizeInt16 + int(s.InfoSize)
 }

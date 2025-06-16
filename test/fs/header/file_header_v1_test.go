@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"pnxlr.eu.org/roll/fs/header"
+	headerV1 "pnxlr.eu.org/roll/fs/header/v1"
 )
 
 func TestFileHeader(t *testing.T) {
@@ -14,32 +14,32 @@ func TestFileHeader(t *testing.T) {
 	defer f.Close()
 	f.Write([]byte("测试 test"))
 
-	fs, err := header.NewFileSect(f)
+	fs, err := headerV1.NewFileSect(f)
 	if err != nil {
 		t.Errorf("NewFileSect() error: %v", err)
 	}
 
-	hs, err := header.NewHashSect(f, 1)
+	hs, err := headerV1.NewHashSect(f, 1)
 	if err != nil {
 		t.Errorf("NewHashSect() error: %v", err)
 	}
 
-	cs, err := header.NewCompressionSect(header.CompressionAlgoZSTD)
+	cs, err := headerV1.NewCompressionSect(headerV1.CompressionAlgoZSTD)
 	if err != nil {
 		t.Errorf("NewCompressionSect() error: %v", err)
 	}
 
-	es, err := header.NewEncryptionSect(header.EncryptionAlgoAES256GCM)
+	es, err := headerV1.NewEncryptionSect(headerV1.EncryptionAlgoAES256GCM)
 	if err != nil {
 		t.Errorf("NewEncryptionSect() error: %v", err)
 	}
 
-	fh := header.NewFileHeader(fs, hs, cs, es)
+	fh := headerV1.NewFileHeader(fs, hs, cs, es)
 	if fh.Len() != len(fh.ToBytes()) {
 		t.Errorf("Len() error: %v, %v", fh.Len(), len(fh.ToBytes()))
 	}
 
-	nfh := &header.FileHeader{}
+	nfh := &headerV1.FileHeader{}
 	if err := nfh.FromBytes(fh.ToBytes()); err != nil {
 		t.Errorf("FromBytes() error: %v", err)
 	}

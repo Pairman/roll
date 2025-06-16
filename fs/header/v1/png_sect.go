@@ -1,4 +1,4 @@
-package header
+package v1
 
 import (
 	"bytes"
@@ -9,12 +9,12 @@ type PNGSect struct { // PNG faking
 	Data []byte
 }
 
+const SizePNGSectData = 67
+
 func (s PNGSect) String() string {
 	return fmt.Sprintf("PNGSect{Data: [0:%v]byte{%x...%x}}",
 		len(s.Data), s.Data[0:2], s.Data[len(s.Data)-2:])
 }
-
-const PNGSectDataSize = 67
 
 func NewPNGSect() *PNGSect {
 	return &PNGSect{Data: []byte{
@@ -47,5 +47,5 @@ func (s *PNGSect) FromBytes(p []byte) error {
 }
 
 func (s *PNGSect) Len() int {
-	return PNGSectDataSize
+	return SizePNGSectData
 }
