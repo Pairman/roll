@@ -10,6 +10,14 @@ import (
 	"pnxlr.eu.org/roll/util/log"
 )
 
+/*
+
+TODO:
+
+- Add command "cloud" with "login", "logout", "list", "down" and "up" sub-commands
+- Store files in a dedicated folder in the cloud disk
+*/
+
 func main() {
 	parser := argparse.NewParser("roll v"+Version, "Share files on the go")
 	verbose := parser.Flag("v", "verbose", &argparse.Options{
