@@ -36,7 +36,7 @@ mkdir -p build/ cache/
 
 # Setup environment
 
-UPX_VERSION="5.0.1"
+UPX_VERSION="5.0.2"
 wget -q https://github.com/upx/upx/releases/download/v$UPX_VERSION/upx-$UPX_VERSION-amd64_linux.tar.xz -O cache/upx.tar.xz
 tar -xf cache/upx.tar.xz -C cache/
 export PATH="cache/upx-$UPX_VERSION-amd64_linux/:$PATH"
